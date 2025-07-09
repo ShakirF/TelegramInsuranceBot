@@ -1,8 +1,9 @@
-﻿using Infrastructure.Telegram;
+﻿using Application.Telegram.Commands;
+using Infrastructure.Telegram.Interface;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using TelegramBot.Handlers;
 
 namespace TelegramBot.Controllers
 {
@@ -10,11 +11,13 @@ namespace TelegramBot.Controllers
     [Route("api/bot/update")]
     public class TelegramWebhookController : ControllerBase
     {
-        private readonly TelegramBotService _botService;
+        private readonly ITelegramBotService _botService;
+        private readonly IMediator _mediator;
 
-        public TelegramWebhookController(TelegramBotService botService)
+        public TelegramWebhookController(ITelegramBotService botService, IMediator mediator)
         {
             _botService = botService;
+            _mediator = mediator;
         }
 
         [HttpPost]
@@ -29,8 +32,21 @@ namespace TelegramBot.Controllers
 
             if (message.Text.Trim().ToLower() == "/start")
             {
-                var handler = new StartCommandHandler(_botService);
-                await handler.HandleAsync(message);
+                var createUser = new CreateUserCommand
+                {
+                    TelegramUserId = message.Chat.Id,
+                    FirstName = message.From?.FirstName,
+                    LastName = message.From?.LastName,
+                    Username = message.From?.Username,
+                };
+                await _mediator.Send(createUser);
+
+                var startCommand = new StartCommand
+                {
+                    ChatId = message.Chat.Id,
+                    FirstName = message.From?.FirstName
+                };
+                await _mediator.Send(startCommand);
             }
             else
             {
