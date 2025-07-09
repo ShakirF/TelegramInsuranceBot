@@ -1,9 +1,10 @@
-﻿using Telegram.Bot;
+﻿using Infrastructure.Telegram.Interface;
+using Telegram.Bot;
 using Telegram.Bot.Types.Enums;
 
-namespace Infrastructure.Telegram
+namespace Infrastructure.Telegram.Service
 {
-    public class TelegramBotService
+    public class TelegramBotService: ITelegramBotService
     {
         private readonly ITelegramBotClient _botClient;
 
