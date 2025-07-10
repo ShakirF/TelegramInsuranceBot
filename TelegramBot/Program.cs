@@ -3,6 +3,9 @@ using Persistence;
 using Application;
 using Infrastructure.Telegram.Service;
 using Infrastructure;
+using Microsoft.AspNetCore.Diagnostics;
+using Newtonsoft.Json;
+using System.Net;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,7 +20,25 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+app.UseExceptionHandler(appError =>
+{
+    appError.Run(async context =>
+    {
+        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        context.Response.ContentType = "application/json";
+        var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
+        if (contextFeature != null)
+        {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError($"{contextFeature.Error}");
 
+            await context.Response.WriteAsync(JsonConvert.SerializeObject(new
+            {
+                error = "? An unexpected error occurred. Please try again later."
+            }));
+        }
+    });
+});
 app.Use(async (context, next) =>
 {
     try
