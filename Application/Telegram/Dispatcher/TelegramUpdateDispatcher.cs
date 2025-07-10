@@ -4,6 +4,7 @@ using MediatR;
 using Application.Interfaces;
 using Application.Telegram.Commands;
 using Domain.Entities;
+using Domain.Enums;
 
 namespace Application.Telegram.Dispatcher
 {
@@ -52,8 +53,29 @@ namespace Application.Telegram.Dispatcher
                     TelegramUserId = chatId,
                     FileId = message.Document!.FileId,
                     FileName = message.Document.FileName,
-                    FileType = step == "awaiting_passport" ? "passport" : "car_registration"
+                    FileType = step == UserStep.AwaitingPassport ? "passport" : "car_registration"
                 });
+                return;
+            }
+            if (message.Text?.Trim().ToLower() == "confirm")
+            {
+                var step = await _stateService.GetStepAsync(chatId);
+                if (step == UserStep.AwaitingConfirmation)
+                {
+                    await _mediator.Send(new ConfirmPolicyCommand
+                    {
+                        ChatId = chatId
+                    });
+
+                    return;
+                }
+                var messageText = step switch
+                {
+                    UserStep.AwaitingPassport => "⚠️ You're not in the confirmation step. Please upload your passport first.",
+                    UserStep.AwaitingCarDoc => "⚠️ You're not in the confirmation step. Please upload your car registration document first.",
+                    _ => "⚠️ You're not in the confirmation step. Please upload your documents first."
+                };
+                await _mediator.Send(new SendTextCommand {ChatId= chatId, Message = messageText });
                 return;
             }
 
