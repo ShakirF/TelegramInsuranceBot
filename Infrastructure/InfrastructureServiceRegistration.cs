@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Services;
+using Infrastructure.OCR;
 using Infrastructure.Storage;
 using Infrastructure.Telegram.Interface;
 using Infrastructure.Telegram.Service;
@@ -19,6 +20,7 @@ namespace Infrastructure
             services.AddSingleton<ITelegramBotService, TelegramBotService>();
             services.AddScoped<IFileStorageService, FileStorageService>();
             services.AddScoped<IUserStateService, UserStateService>();
+            services.AddHttpClient<ICustomOcrService, CustomMindeeOcrService>();
 
             return services;
         }
