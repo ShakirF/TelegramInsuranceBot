@@ -1,5 +1,5 @@
 ﻿using Application.Interfaces;
-using Application.Services;
+using Application.Telegram.Dispatcher;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Application
@@ -9,7 +9,8 @@ namespace Application
         public static IServiceCollection AddApplicationServices(this IServiceCollection services)
         {
             services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(typeof(ApplicationServiceRegistration).Assembly));
-            services.AddScoped<IUserStateService, UserStateService>();
+            services.AddScoped<IUpdateDispatcher, TelegramUpdateDispatcher>();
+
             return services;
         }
     }
