@@ -9,13 +9,13 @@ namespace Domain.Entities
     public class Document
     {
         public int Id { get; set; }
-
-        public long TelegramUserId { get; set; }  
-        public string FileId { get; set; } = null!; 
+        public long TelegramUserId { get; set; }
+        public string FileId { get; set; } = null!;
         public string FileName { get; set; } = null!;
-        public string FileType { get; set; } = null!; 
+        public string FileType { get; set; } = null!;
         public string LocalPath { get; set; } = null!;
-
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+        public string? OcrRawJson { get; set; } // optional - JSON result
+        public ICollection<ExtractedField> ExtractedFields { get; set; } = new List<ExtractedField>();
     }
 }
