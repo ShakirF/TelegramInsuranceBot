@@ -1,7 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Telegram.Commands;
 using Infrastructure.Telegram.Interface;
-using Infrastructure.Telegram.Service;
 using MediatR;
 
 namespace Application.Telegram.Handlers
@@ -19,7 +18,8 @@ namespace Application.Telegram.Handlers
 
         public async Task<Unit> Handle(StartCommand request, CancellationToken cancellationToken)
         {
-            string introText = $"Hello {request.FirstName}, I will help you get insured!";
+            string introText = $"Hello {request.FirstName}, I will help you get insured!\n" +
+                                        "📤 Please upload your passport document to begin.";
             await _botService.SendTextAsync(request.ChatId, introText);
 
             await _stateService.SetStepAsync(request.ChatId, "awaiting_document");
