@@ -1,4 +1,5 @@
 ﻿using Application.Interfaces;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Persistence.DbContext;
 
@@ -13,15 +14,15 @@ namespace Application.Services
             _context = context;
         }
 
-        public async Task<string> GetStepAsync(long telegramUserId)
+        public async Task<UserStep> GetStepAsync(long telegramUserId)
         {
             var state = await _context.UserStates
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.TelegramUserId == telegramUserId);
 
-            return state?.CurrentStep ?? "start";
+            return state?.CurrentStep ?? UserStep.Start;
         }
-        public async Task SetStepAsync(long telegramUserId, string step)
+        public async Task SetStepAsync(long telegramUserId, UserStep step)
         {
             var state = await _context.UserStates
                 .FirstOrDefaultAsync(s => s.TelegramUserId == telegramUserId);
