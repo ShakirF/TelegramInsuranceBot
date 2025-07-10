@@ -1,4 +1,7 @@
-﻿using Infrastructure.Telegram.Interface;
+﻿using Application.Interfaces;
+using Application.Services;
+using Infrastructure.Storage;
+using Infrastructure.Telegram.Interface;
 using Infrastructure.Telegram.Service;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,8 +16,10 @@ namespace Infrastructure
             var botToken = configuration["BOT_TOKEN"] ?? throw new InvalidOperationException("BOT_TOKEN is missing");
 
             services.AddSingleton<ITelegramBotClient>(new TelegramBotClient(botToken));
-
             services.AddSingleton<ITelegramBotService, TelegramBotService>();
+            services.AddScoped<IFileStorageService, FileStorageService>();
+            services.AddScoped<IUserStateService, UserStateService>();
+
             return services;
         }
     }

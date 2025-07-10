@@ -4,7 +4,7 @@ using Telegram.Bot.Types.Enums;
 
 namespace Infrastructure.Telegram.Service
 {
-    public class TelegramBotService: ITelegramBotService
+    public class TelegramBotService : ITelegramBotService
     {
         private readonly ITelegramBotClient _botClient;
 
@@ -29,6 +29,12 @@ namespace Infrastructure.Telegram.Service
             {
                 await _botClient.SetWebhook(url);
             }
+        }
+
+        public async Task DownloadFileAsync(string fileId, Stream destination)
+        {
+            var file = await _botClient.GetFile(fileId);
+            await _botClient.DownloadFile(file.FilePath, destination);
         }
     }
 }
