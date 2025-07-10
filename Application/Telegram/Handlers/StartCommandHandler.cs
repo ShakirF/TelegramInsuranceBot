@@ -1,5 +1,6 @@
 ﻿using Application.Interfaces;
 using Application.Telegram.Commands;
+using Domain.Enums;
 using Infrastructure.Telegram.Interface;
 using MediatR;
 
@@ -22,7 +23,7 @@ namespace Application.Telegram.Handlers
                                         "📤 Please upload your passport document to begin.";
             await _botService.SendTextAsync(request.ChatId, introText);
 
-            await _stateService.SetStepAsync(request.ChatId, "awaiting_document");
+            await _stateService.SetStepAsync(request.ChatId, UserStep.AwaitingPassport);
 
             return Unit.Value;
         }

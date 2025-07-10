@@ -1,5 +1,6 @@
 ﻿using Application.Telegram.Commands;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence.DbContext;
@@ -35,7 +36,7 @@ namespace Application.Telegram.Handlers
             await _context.UserStates.AddAsync(new UserState
             {
                 TelegramUserId = request.TelegramUserId,
-                CurrentStep = "start",
+                CurrentStep = UserStep.Start,
                 UpdatedAt = DateTime.UtcNow,
                 UserId = user.Id
             });
