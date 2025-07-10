@@ -10,5 +10,6 @@ namespace Persistence.DbContext
         public DbSet<User> Users => Set<User>();
         public DbSet<UserState> UserStates => Set<UserState>();
         public DbSet<Document> Documents => Set<Document>();
+        public DbSet<ExtractedField> ExtractedFields => Set<ExtractedField>();
     }
 }
