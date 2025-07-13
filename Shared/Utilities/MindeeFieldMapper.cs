@@ -2,7 +2,6 @@
 {
     public static class MindeeFieldMapper
     {
-        private const float MinConfidenceThreshold = 0.85f;
 
         private static readonly Dictionary<string, Dictionary<string, string>> _mappingsByType = new()
         {
@@ -39,11 +38,9 @@
             }
         };
 
-        public static string? MapField(string rawField, float confidence, string fileType)
+        public static string? MapField(string rawField, string fileType)
         {
-            if (confidence < MinConfidenceThreshold)
-                return null;
-
+       
             if (_mappingsByType.TryGetValue(fileType.ToLower(), out var typeMap))
             {
                 return typeMap.TryGetValue(rawField, out var mapped) ? mapped : null;
