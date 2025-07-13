@@ -12,11 +12,13 @@ namespace Application.Telegram.Dispatcher
     {
         private readonly IMediator _mediator;
         private readonly IUserStateService _stateService;
+        private readonly IMessageProvider _messageProvider;
 
-        public TelegramUpdateDispatcher(IMediator mediator, IUserStateService stateService)
+        public TelegramUpdateDispatcher(IMediator mediator, IUserStateService stateService, IMessageProvider messageProvider)
         {
             _mediator = mediator;
             _stateService = stateService;
+            _messageProvider = messageProvider;
         }
 
         public async Task HandleAsync(Update update)
@@ -59,23 +61,31 @@ namespace Application.Telegram.Dispatcher
             }
             if (message.Text?.Trim().ToLower() == "confirm")
             {
-                var step = await _stateService.GetStepAsync(chatId);
-                if (step == UserStep.AwaitingConfirmation)
-                {
-                    await _mediator.Send(new ConfirmPolicyCommand
-                    {
-                        ChatId = chatId
-                    });
+                await _mediator.Send(new ConfirmPolicyCommand { ChatId = chatId });
+                return;
+            }
 
+            if (message.Text?.Trim().ToLower() == "cancel")
+            {
+                var step = await _stateService.GetStepAsync(chatId);
+
+                if (step == UserStep.AwaitingPriceConfirmation)
+                {
+                    var retryCount = await _stateService.GetCancelRetryCountAsync(chatId);
+
+                    if (retryCount == 0)
+                    {
+                        await _mediator.Send(new SendTextCommand { ChatId = chatId, Message = _messageProvider.GetPolicyFixPriceMessage()});
+                        await _stateService.IncrementCancelRetryCountAsync(chatId);
+                        return;
+                    }
+
+                    await _mediator.Send(new CancelPolicyCommand { ChatId = chatId });
+                    await _stateService.ResetCancelRetryCountAsync(chatId);
                     return;
                 }
-                var messageText = step switch
-                {
-                    UserStep.AwaitingPassport => "⚠️ You're not in the confirmation step. Please upload your passport first.",
-                    UserStep.AwaitingCarDoc => "⚠️ You're not in the confirmation step. Please upload your car registration document first.",
-                    _ => "⚠️ You're not in the confirmation step. Please upload your documents first."
-                };
-                await _mediator.Send(new SendTextCommand {ChatId= chatId, Message = messageText });
+
+                await _mediator.Send(new CancelPolicyCommand { ChatId = chatId });
                 return;
             }
 
