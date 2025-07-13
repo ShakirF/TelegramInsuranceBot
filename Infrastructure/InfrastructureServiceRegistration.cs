@@ -1,6 +1,9 @@
 ﻿using Application.Interfaces;
 using Application.Services;
+using Domain.Interfaces;
+using Infrastructure.Localization;
 using Infrastructure.OCR;
+using Infrastructure.Repositories;
 using Infrastructure.Storage;
 using Infrastructure.Telegram.Interface;
 using Infrastructure.Telegram.Service;
@@ -20,7 +23,13 @@ namespace Infrastructure
             services.AddSingleton<ITelegramBotService, TelegramBotService>();
             services.AddScoped<IFileStorageService, FileStorageService>();
             services.AddScoped<IUserStateService, UserStateService>();
-            services.AddHttpClient<ICustomOcrService, CustomMindeeOcrService>();
+            services.AddHttpClient<ICustomOcrService, CustomMindeeOcrService>().ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler
+            {
+                AllowAutoRedirect = false
+            });
+            services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
+            services.AddScoped<IUnitOfWork, UnitOfWork>();
+            services.AddScoped<IMessageProvider, MessageProvider>();
 
             return services;
         }
