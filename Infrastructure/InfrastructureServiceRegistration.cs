@@ -3,6 +3,7 @@ using Application.Services;
 using Domain.Interfaces;
 using Infrastructure.Localization;
 using Infrastructure.OCR;
+using Infrastructure.OpenAI;
 using Infrastructure.Repositories;
 using Infrastructure.Storage;
 using Infrastructure.Telegram.Interface;
@@ -29,7 +30,8 @@ namespace Infrastructure
             });
             services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddScoped<IMessageProvider, MessageProvider>();
+            services.AddScoped<IPromptProvider, PromptProvider>();
+            services.AddHttpClient<IOpenAIService, OpenAIService>();
 
             return services;
         }
