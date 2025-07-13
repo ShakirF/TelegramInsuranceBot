@@ -12,6 +12,7 @@ namespace Domain.Enums
         AwaitingPassport,
         AwaitingCarDoc,
         AwaitingConfirmation,
+        AwaitingPriceConfirmation,
         Confirmed
     }
 }
