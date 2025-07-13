@@ -9,6 +9,5 @@
 
         public string FieldName { get; set; } = null!;
         public string FieldValue { get; set; } = null!;
-        public float Confidence { get; set; }
     }
 }

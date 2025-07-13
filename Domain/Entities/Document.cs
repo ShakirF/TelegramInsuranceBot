@@ -15,7 +15,8 @@ namespace Domain.Entities
         public string FileType { get; set; } = null!;
         public string LocalPath { get; set; } = null!;
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
-        public string? OcrRawJson { get; set; } // optional - JSON result
+        public string? OcrRawJson { get; set; }
+        public bool IsActive { get; set; } = true;
         public ICollection<ExtractedField> ExtractedFields { get; set; } = new List<ExtractedField>();
     }
 }

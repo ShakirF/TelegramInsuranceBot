@@ -10,6 +10,7 @@ namespace Domain.Entities
         [Column(TypeName = "varchar(30)")]
         public UserStep CurrentStep { get; set; } = UserStep.Start;
         public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+        public int CancelRetryCount { get; set; } = 0;
         public int UserId { get; set; }
         public User User { get; set; } = null!;
     }
