@@ -79,7 +79,6 @@ namespace Application.Telegram.Handlers
                             DocumentId = documentId,
                             FieldName = mapped,
                             FieldValue = value,
-                            Confidence = 0.0f // Default confidence if not provided
                         });
                     }
                 }

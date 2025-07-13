@@ -12,18 +12,18 @@ namespace Application.Telegram.Handlers
         private readonly IUserStateService _stateService;
         private readonly ITelegramBotService _botService;
         private readonly ILogger<ConfirmPolicyCommandHandler> _logger;
-        private readonly IMessageProvider _messageProvider;
+        private readonly IPromptProvider _promptProvider;
 
         public ConfirmPolicyCommandHandler(
             IUserStateService stateService,
             ITelegramBotService botService,
             ILogger<ConfirmPolicyCommandHandler> logger,
-            IMessageProvider messageProvider)
+            IPromptProvider promptProvider)
         {
             _stateService = stateService;
             _botService = botService;
             _logger = logger;
-            _messageProvider = messageProvider;
+            _promptProvider = promptProvider;
         }
 
         public async Task<Unit> Handle(ConfirmPolicyCommand request, CancellationToken cancellationToken)
@@ -34,7 +34,7 @@ namespace Application.Telegram.Handlers
             {
                 await _stateService.SetStepAsync(request.ChatId, UserStep.AwaitingPriceConfirmation);
 
-                await _botService.SendTextAsync(request.ChatId, _messageProvider.GetPriceQuoteMessage("100 USD"));
+                await _botService.SendTextAsync(request.ChatId, await _promptProvider.GetPriceQuoteMessageAsync("100 USD"));
 
                 _logger.LogInformation("User {ChatId} confirmed data, moved to AwaitingPriceConfirmation.", request.ChatId);
                 return Unit.Value;
@@ -44,13 +44,13 @@ namespace Application.Telegram.Handlers
             {
                 await _stateService.SetStepAsync(request.ChatId, UserStep.Confirmed);
 
-                await _botService.SendTextAsync(request.ChatId, _messageProvider.GetPolicyConfirmedMessage());
+                await _botService.SendTextAsync(request.ChatId, await _promptProvider.GetPolicyConfirmedMessageAsync());
 
                 _logger.LogInformation("User {ChatId} confirmed final price. Status: Confirmed.", request.ChatId);
                 return Unit.Value;
             }
 
-            await _botService.SendTextAsync(request.ChatId, _messageProvider.GetStepMismatchMessage(step));
+            await _botService.SendTextAsync(request.ChatId,await _promptProvider.GetStepMismatchMessageAsync(step));
 
             return Unit.Value;
         }

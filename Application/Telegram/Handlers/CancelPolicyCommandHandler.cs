@@ -10,19 +10,19 @@ namespace Application.Telegram.Handlers
     {
         private readonly IUserStateService _stateService;
         private readonly ITelegramBotService _bot;
-        private readonly IMessageProvider _messageProvider;
+        private readonly IPromptProvider _promptProvider;
 
-        public CancelPolicyCommandHandler(IUserStateService stateService, ITelegramBotService bot, IMessageProvider messageProvider)
+        public CancelPolicyCommandHandler(IUserStateService stateService, ITelegramBotService bot, IPromptProvider promptProvider)
         {
             _stateService = stateService;
             _bot = bot;
-            _messageProvider = messageProvider;
+            _promptProvider = promptProvider;
         }
 
         public async Task<Unit> Handle(CancelPolicyCommand request, CancellationToken cancellationToken)
         {
             await _stateService.SetStepAsync(request.ChatId, UserStep.Start);
-            await _bot.SendTextAsync(request.ChatId, _messageProvider.GetPolicyCancelMessage());
+            await _bot.SendTextAsync(request.ChatId, await _promptProvider.GetOcrDoneMessageAsync());
             return Unit.Value;
         }
     }

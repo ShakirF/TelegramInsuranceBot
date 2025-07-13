@@ -12,13 +12,13 @@ namespace Application.Telegram.Dispatcher
     {
         private readonly IMediator _mediator;
         private readonly IUserStateService _stateService;
-        private readonly IMessageProvider _messageProvider;
+        private readonly IPromptProvider _promptProvider;
 
-        public TelegramUpdateDispatcher(IMediator mediator, IUserStateService stateService, IMessageProvider messageProvider)
+        public TelegramUpdateDispatcher(IMediator mediator, IUserStateService stateService, IPromptProvider promptProvider)
         {
             _mediator = mediator;
             _stateService = stateService;
-            _messageProvider = messageProvider;
+            _promptProvider = promptProvider;
         }
 
         public async Task HandleAsync(Update update)
@@ -75,7 +75,7 @@ namespace Application.Telegram.Dispatcher
 
                     if (retryCount == 0)
                     {
-                        await _mediator.Send(new SendTextCommand { ChatId = chatId, Message = _messageProvider.GetPolicyFixPriceMessage()});
+                        await _mediator.Send(new SendTextCommand { ChatId = chatId, Message = await _promptProvider.GetPolicyFixPriceMessageAsync()});
                         await _stateService.IncrementCancelRetryCountAsync(chatId);
                         return;
                     }

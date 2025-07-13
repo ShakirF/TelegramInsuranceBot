@@ -8,17 +8,17 @@ namespace Application.Telegram.Handlers
     public class UnknownCommandHandler : IRequestHandler<UnknownCommand, Unit>
     {
         private readonly ITelegramBotService _botService;
-        private readonly IMessageProvider _messageProvider;
+        private readonly IPromptProvider _promptProvider;
 
-        public UnknownCommandHandler(ITelegramBotService botService, IMessageProvider messageProvider)
+        public UnknownCommandHandler(ITelegramBotService botService, IPromptProvider promptProvider)
         {
             _botService = botService;
-            _messageProvider = messageProvider;
+            _promptProvider = promptProvider;
         }
 
         public async Task<Unit> Handle(UnknownCommand request, CancellationToken cancellationToken)
         {
-            var message = _messageProvider.GetUnknownCommandMessage();
+            var message = await _promptProvider.GetUnknownCommandMessageAsync();
             await _botService.SendTextAsync(request.ChatId, message);
             return Unit.Value;
         }

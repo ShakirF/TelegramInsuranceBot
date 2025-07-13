@@ -10,18 +10,18 @@ namespace Application.Telegram.Handlers
     {
         private readonly ITelegramBotService _botService;
         private readonly IUserStateService _stateService;
-        private readonly IMessageProvider _messageProvider;
+        private readonly IPromptProvider _promptProvider;
 
-        public StartCommandHandler(ITelegramBotService botService, IUserStateService stateService, IMessageProvider messageProvider)
+        public StartCommandHandler(ITelegramBotService botService, IUserStateService stateService, IPromptProvider promptProvider)
         {
             _botService = botService;
             _stateService = stateService;
-            _messageProvider = messageProvider;
+            _promptProvider = promptProvider;
         }
 
         public async Task<Unit> Handle(StartCommand request, CancellationToken cancellationToken)
         {
-           var message = _messageProvider.GetStartMessage(request.FirstName);
+           var message = await _promptProvider.GetStartMessageAsync(request.FirstName);
             await _botService.SendTextAsync(request.ChatId, message);
 
             await _stateService.SetStepAsync(request.ChatId, UserStep.AwaitingPassport);

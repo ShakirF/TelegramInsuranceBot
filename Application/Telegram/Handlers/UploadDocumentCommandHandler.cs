@@ -21,7 +21,7 @@ namespace Application.Telegram.Handlers
         private readonly IUserStateService _stateService;
         private readonly ICustomOcrService _ocrService;
         private readonly IMediator _mediator;
-        private readonly IMessageProvider _messageProvider;
+        private readonly IPromptProvider _promptProvider;
 
         public UploadDocumentCommandHandler(
             ITelegramBotService botService,
@@ -31,7 +31,7 @@ namespace Application.Telegram.Handlers
             IUserStateService stateService,
             ICustomOcrService ocrService,
             IMediator mediator,
-            IMessageProvider messageProvider)
+            IPromptProvider promptProvider)
         {
             _botService = botService;
             _unitOfWork = unitOfWork;
@@ -40,7 +40,7 @@ namespace Application.Telegram.Handlers
             _stateService = stateService;
             _ocrService = ocrService;
             _mediator = mediator;
-            _messageProvider = messageProvider;
+            _promptProvider = promptProvider;
         }
 
         public async Task<Unit> Handle(UploadDocumentCommand request, CancellationToken cancellationToken)
@@ -52,7 +52,7 @@ namespace Application.Telegram.Handlers
                 if ((currentStep == UserStep.AwaitingPassport && request.FileType != "passport") ||
                     (currentStep == UserStep.AwaitingCarDoc && request.FileType != "car_registration"))
                 {
-                    var messageUnexpectedDocument = _messageProvider.GetUnexpectedDocumentMessage();
+                    var messageUnexpectedDocument = await _promptProvider.GetUnexpectedDocumentMessageAsync();
 
                     await _botService.SendTextAsync(request.TelegramUserId, messageUnexpectedDocument);
                     return Unit.Value;
@@ -87,7 +87,7 @@ namespace Application.Telegram.Handlers
                 await _unitOfWork.Documents.AddAsync(doc, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-                var messageSaved = _messageProvider.GetDocumentSavedMessage(request.FileName);
+                var messageSaved = await _promptProvider.GetDocumentSavedMessageAsync(request.FileName);
 
                 await _botService.SendTextAsync(request.TelegramUserId, messageSaved);
 
@@ -99,7 +99,7 @@ namespace Application.Telegram.Handlers
                     _ => throw new InvalidOperationException("Unsupported file type.")
                 };
 
-                var messageOcrDone = _messageProvider.GetOcrDoneMessage();
+                var messageOcrDone = await _promptProvider.GetOcrDoneMessageAsync();
                 await _botService.SendTextAsync(request.TelegramUserId, messageOcrDone);
 
                 await _mediator.Send(new ParseOcrCommand
@@ -111,7 +111,7 @@ namespace Application.Telegram.Handlers
                 var nextStep = currentStep switch
                 {
                     UserStep.AwaitingPassport => UserStep.AwaitingCarDoc,
-                    UserStep.AwaitingCarDoc => UserStep.AwaitingPriceConfirmation,
+                    UserStep.AwaitingCarDoc => UserStep.AwaitingConfirmation,
                     _ => currentStep
                 };
 
@@ -119,12 +119,12 @@ namespace Application.Telegram.Handlers
 
                 if (nextStep == UserStep.AwaitingCarDoc)
                 {
-                    var messagePassportReceived = _messageProvider.GetPassportPromptMessage();
+                    var messagePassportReceived = await _promptProvider.GetPassportPromptMessageAsync();
                     await _botService.SendTextAsync(request.TelegramUserId, messagePassportReceived);
                 }
                 else if (nextStep == UserStep.AwaitingConfirmation)
                 {
-                    var messageCarDocReceived = _messageProvider.GetCarDocPromptMessage( request.FileName);
+                    var messageCarDocReceived = await _promptProvider.GetCarDocPromptMessageAsync(request.FileName);
                     await _botService.SendTextAsync(request.TelegramUserId, messageCarDocReceived);
 
                     await _mediator.Send(new SendExtractedFieldsCommand
@@ -141,14 +141,14 @@ namespace Application.Telegram.Handlers
             {
                 _logger.LogError(ex, "HTTP error during OCR for user {UserId}", request.TelegramUserId);
 
-                var messageOcrError = _messageProvider.GetOcrErrorMessage();
+                var messageOcrError = await _promptProvider.GetOcrErrorMessageAsync();
                 await _botService.SendTextAsync(request.TelegramUserId, messageOcrError);
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unexpected error in UploadDocumentCommandHandler for user {UserId}", request.TelegramUserId);
 
-                var messageUnexpectedError = _messageProvider.GetUnexpectedErrorMessage();
+                var messageUnexpectedError = await _promptProvider.GetUnexpectedErrorMessageAsync();
                 await _botService.SendTextAsync(request.TelegramUserId, messageUnexpectedError);
             }
 
