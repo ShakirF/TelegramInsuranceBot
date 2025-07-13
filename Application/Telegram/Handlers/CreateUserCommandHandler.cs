@@ -1,6 +1,7 @@
 ﻿using Application.Telegram.Commands;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Interfaces;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Persistence.DbContext;
@@ -9,16 +10,16 @@ namespace Application.Telegram.Handlers
 {
     public class CreateUserCommandHandler : IRequestHandler<CreateUserCommand>
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public CreateUserCommandHandler(AppDbContext context)
+        public CreateUserCommandHandler(IUnitOfWork unitOfWork)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task Handle(CreateUserCommand request, CancellationToken cancellationToken)
         {
-            var user = await _context.Users.FirstOrDefaultAsync(x => x.TelegramUserId == request.TelegramUserId, cancellationToken);
+            var user = await _unitOfWork.Users.Query().FirstOrDefaultAsync(x => x.TelegramUserId == request.TelegramUserId, cancellationToken);
             if (user != null)
                 return;
 
@@ -30,18 +31,18 @@ namespace Application.Telegram.Handlers
                 Username = request.Username,
             };
 
-            await _context.Users.AddAsync(user, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.Users.AddAsync(user, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-            await _context.UserStates.AddAsync(new UserState
+            await _unitOfWork.UserStates.AddAsync(new UserState
             {
                 TelegramUserId = request.TelegramUserId,
                 CurrentStep = UserStep.Start,
                 UpdatedAt = DateTime.UtcNow,
                 UserId = user.Id
-            });
+            }, cancellationToken);
 
-            await _context.SaveChangesAsync(cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
         }
     }
 }

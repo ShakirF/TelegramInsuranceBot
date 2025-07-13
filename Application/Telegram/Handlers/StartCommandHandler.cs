@@ -10,18 +10,19 @@ namespace Application.Telegram.Handlers
     {
         private readonly ITelegramBotService _botService;
         private readonly IUserStateService _stateService;
+        private readonly IMessageProvider _messageProvider;
 
-        public StartCommandHandler(ITelegramBotService botService, IUserStateService stateService)
+        public StartCommandHandler(ITelegramBotService botService, IUserStateService stateService, IMessageProvider messageProvider)
         {
             _botService = botService;
             _stateService = stateService;
+            _messageProvider = messageProvider;
         }
 
         public async Task<Unit> Handle(StartCommand request, CancellationToken cancellationToken)
         {
-            string introText = $"Hello {request.FirstName}, I will help you get insured!\n" +
-                                        "📤 Please upload your passport document to begin.";
-            await _botService.SendTextAsync(request.ChatId, introText);
+           var message = _messageProvider.GetStartMessage(request.FirstName);
+            await _botService.SendTextAsync(request.ChatId, message);
 
             await _stateService.SetStepAsync(request.ChatId, UserStep.AwaitingPassport);
 

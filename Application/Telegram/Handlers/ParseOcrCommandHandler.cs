@@ -1,6 +1,8 @@
 ﻿using Application.Telegram.Commands;
 using Domain.Entities;
+using Domain.Interfaces;
 using MediatR;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
 using Persistence.DbContext;
@@ -11,12 +13,12 @@ namespace Application.Telegram.Handlers
 {
     public class ParseOcrCommandHandler : IRequestHandler<ParseOcrCommand, Unit>
     {
-        private readonly AppDbContext _context;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<ParseOcrCommandHandler> _logger;
 
-        public ParseOcrCommandHandler(AppDbContext context, ILogger<ParseOcrCommandHandler> logger)
+        public ParseOcrCommandHandler(IUnitOfWork unitOfWork, ILogger<ParseOcrCommandHandler> logger)
         {
-            _context = context;
+            _unitOfWork = unitOfWork;
             _logger = logger;
         }
 
@@ -24,7 +26,8 @@ namespace Application.Telegram.Handlers
         {
             try
             {
-                var document = await _context.Documents.FindAsync(new object[] { request.DocumentId }, cancellationToken);
+                var document = await _unitOfWork.Documents.Query()
+                 .FirstOrDefaultAsync(d => d.Id == request.DocumentId, cancellationToken);
                 if (document == null)
                     throw new Exception($"Document with ID {request.DocumentId} not found.");
 
@@ -32,8 +35,11 @@ namespace Application.Telegram.Handlers
 
                 var fields = ExtractFieldsFromJson(request.OcrJson, request.DocumentId, document.FileType);
 
-                await _context.ExtractedFields.AddRangeAsync(fields, cancellationToken);
-                await _context.SaveChangesAsync(cancellationToken);
+                foreach (var field in fields)
+                {
+                    await _unitOfWork.ExtractedFields.AddAsync(field, cancellationToken);
+                }
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("📤 Extracted {Count} fields from OCR for Document ID: {Id}", fields.Count, document.Id);
 
@@ -62,11 +68,10 @@ namespace Application.Telegram.Handlers
             foreach (var property in fields.Properties())
             {
                 var value = property.Value?["value"]?.ToString();
-                var confidenceStr = property.Value?["confidence"]?.ToString();
 
-                if (!string.IsNullOrEmpty(value) && float.TryParse(confidenceStr, out float confidence))
+                if (!string.IsNullOrEmpty(value) )
                 {
-                    var mapped = MindeeFieldMapper.MapField(property.Name, confidence, fileType);
+                    var mapped = MindeeFieldMapper.MapField(property.Name, fileType);
                     if (!string.IsNullOrWhiteSpace(mapped))
                     {
                         list.Add(new ExtractedField
@@ -74,7 +79,7 @@ namespace Application.Telegram.Handlers
                             DocumentId = documentId,
                             FieldName = mapped,
                             FieldValue = value,
-                            Confidence = confidence
+                            Confidence = 0.0f // Default confidence if not provided
                         });
                     }
                 }
