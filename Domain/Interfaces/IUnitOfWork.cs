@@ -8,6 +8,7 @@ namespace Domain.Interfaces
         IRepository<UserState> UserStates { get; }
         IRepository<Document> Documents { get; }
         IRepository<ExtractedField> ExtractedFields { get; }
+        IRepository<Policy> Policies { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
