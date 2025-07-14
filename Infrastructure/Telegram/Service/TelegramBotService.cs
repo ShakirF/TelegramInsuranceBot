@@ -1,5 +1,6 @@
 ﻿using Infrastructure.Telegram.Interface;
 using Telegram.Bot;
+using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 
 namespace Infrastructure.Telegram.Service
@@ -35,6 +36,20 @@ namespace Infrastructure.Telegram.Service
         {
             var file = await _botClient.GetFile(fileId);
             await _botClient.DownloadFile(file.FilePath, destination);
+        }
+
+        public async Task SendDocumentAsync(long chatId, string filePath, string caption = "")
+        {
+            using var stream = File.OpenRead(filePath);
+
+            var inputOnlineFile = new InputFileStream(stream, Path.GetFileName(filePath));
+
+            await _botClient.SendDocument(
+                chatId: chatId,
+                document: inputOnlineFile,
+                caption: caption,
+                parseMode: ParseMode.Html 
+            );
         }
     }
 }

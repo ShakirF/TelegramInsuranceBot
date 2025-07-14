@@ -11,5 +11,6 @@ namespace Infrastructure.Telegram.Interface
         Task SendTextAsync(long chatId, string message);
         Task SetWebhookAsync(string url);
         Task DownloadFileAsync(string fileId, Stream destination);
+        Task SendDocumentAsync(long chatId, string filePath, string caption = "");
     }
 }
