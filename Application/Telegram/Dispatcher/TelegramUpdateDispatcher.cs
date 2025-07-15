@@ -54,11 +54,29 @@ namespace Application.Telegram.Dispatcher
                 {
                     TelegramUserId = chatId,
                     FileId = message.Document!.FileId,
-                    FileName = message.Document.FileName,
+                    FileName = message.Document.FileName!,
                     FileType = step == UserStep.AwaitingPassport ? "passport" : "car_registration"
                 });
                 return;
             }
+
+            if (message.Type == MessageType.Photo && message.Photo?.Any() == true)
+            {
+                var photo = message.Photo.Last(); // highest quality
+                var step = await _stateService.GetStepAsync(chatId);
+                var filename = $"photo_{photo.FileUniqueId}.jpg";
+
+                await _mediator.Send(new UploadDocumentCommand
+                {
+                    TelegramUserId = chatId,
+                    FileId = photo.FileId,
+                    FileName = filename,
+                    FileType = step == UserStep.AwaitingPassport ? "passport" : "car_registration"
+                });
+
+                return;
+            }
+
             if (message.Text?.Trim().ToLower() == "confirm")
             {
                 await _mediator.Send(new ConfirmPolicyCommand { ChatId = chatId });
@@ -75,7 +93,7 @@ namespace Application.Telegram.Dispatcher
 
                     if (retryCount == 0)
                     {
-                        await _mediator.Send(new SendTextCommand { ChatId = chatId, Message = await _promptProvider.GetPolicyFixPriceMessageAsync()});
+                        await _mediator.Send(new SendTextCommand { ChatId = chatId, Message = await _promptProvider.GetPolicyFixPriceMessageAsync() });
                         await _stateService.IncrementCancelRetryCountAsync(chatId);
                         return;
                     }
@@ -86,6 +104,28 @@ namespace Application.Telegram.Dispatcher
                 }
 
                 await _mediator.Send(new CancelPolicyCommand { ChatId = chatId });
+                return;
+            }
+
+            if (message.Text?.Trim().ToLower() == "/resendpolicy")
+            {
+                await _mediator.Send(new ResendPolicyCommand { ChatId = chatId });
+                return;
+            }
+
+            if (message.Text?.Trim().ToLower() == "/simulateocr")
+            {
+                await _mediator.Send(new SimulateOcrCommand { ChatId = chatId });
+                return;
+            }
+            if (message.Text?.Trim().ToLower() == "/adminsummary")
+            {
+                await _mediator.Send(new AdminSummaryCommand { ChatId = chatId });
+                return;
+            }
+            if (message.Text?.Trim().ToLower() == "/logs")
+            {
+                await _mediator.Send(new LogsCommand { ChatId = chatId });
                 return;
             }
 
