@@ -1,4 +1,6 @@
 ﻿using Application.Interfaces;
+using Domain.Entities;
+using Domain.Interfaces;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,20 +16,22 @@ namespace Infrastructure.OpenAI
     {
         private readonly HttpClient _httpClient;
         private readonly ILogger<OpenAIService> _logger;
+        private readonly IUnitOfWork _unitOfWork;
         private readonly string _apiKey;
 
-        public OpenAIService(HttpClient httpClient, IConfiguration config, ILogger<OpenAIService> logger)
+        public OpenAIService(HttpClient httpClient, IConfiguration config, ILogger<OpenAIService> logger, IUnitOfWork unitOfWork)
         {
             _httpClient = httpClient;
             _logger = logger;
             _apiKey = config["OpenAI:ApiKey"]!;
+            _unitOfWork = unitOfWork;
         }
 
         public async Task<string> GetBotReplyAsync(string prompt, CancellationToken cancellationToken = default)
         {
             var request = new
             {
-                model = "anthropic/claude-3-haiku", 
+                model = "anthropic/claude-3-haiku",
                 messages = new[]
                 {
                 new { role = "system", content = "You are a friendly Telegram bot that helps users buy car insurance. Keep responses short, include emojis, use simple language, and guide users step by step. Never send long paragraphs. Don't add extra explanations unless necessary." },
@@ -56,11 +60,21 @@ namespace Infrastructure.OpenAI
             }
 
             var parsed = JsonDocument.Parse(content);
-            return parsed.RootElement
+            var reply = parsed.RootElement
                 .GetProperty("choices")[0]
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString() ?? "Sorry, I couldn't understand.";
+
+            await _unitOfWork.Conversations.AddAsync(new Conversation
+            {
+                Prompt = prompt,
+                Response = reply!,
+                CreatedAt = DateTime.UtcNow
+            });
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return reply!;
         }
     }
 
