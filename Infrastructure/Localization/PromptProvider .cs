@@ -62,7 +62,7 @@ namespace Infrastructure.Localization
 
         public Task<string> GetPolicyFixPriceMessageAsync() =>
             _openAi.GetBotReplyAsync("Inform user that the price is fixed and cannot be changed. Ask again 'confirm' to proceed or 'cancel' again to cancel and start over..");
-        public Task<string> GetGenerateSummaryMessageAsync(string summary, CancellationToken cancellationToken) =>
-                        _openAi.GetBotReplyAsync($"Generate a summary of the policy with the following details: {summary}. Please ensure it is clear and concise.", cancellationToken);
+        public Task<string> GetGenerateSummaryMessageAsync() =>
+                        _openAi.GetBotReplyAsync($"Inform user to you policy create soon. Please ensure it is clear and concise.");
     }
 }

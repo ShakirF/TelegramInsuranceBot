@@ -37,13 +37,12 @@ namespace Application.Telegram.Handlers
 
             var extracted = await _unitOfWork.ExtractedFields.Query()
                 .Include(f => f.Document)
-                    .ThenInclude(d => d.User)
-                .Where(f => f.Document.User!.TelegramUserId == request.ChatId)
+                .Where(f => f.Document.TelegramUserId == request.ChatId)
                 .ToListAsync(cancellationToken);
 
             var summary = string.Join("\n", extracted.Select(x => $"{x.FieldName}: {x.FieldValue}"));
 
-            var gptMessage = await _promptProvider.GetGenerateSummaryMessageAsync(summary,cancellationToken);
+            var gptMessage = await _promptProvider.GetGenerateSummaryMessageAsync();
 
             var pdfBytes = await _builder
                 .WithUser(user!)
