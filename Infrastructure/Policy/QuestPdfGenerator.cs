@@ -25,13 +25,13 @@ namespace Infrastructure.Policy
 
                     page.Content().Column(col =>
                     {
-                        col.Item().Text($"👤 Name: {user.FirstName} {user.LastName}");
-                        col.Item().Text($"📅 Issued: {now:yyyy-MM-dd}   |   Expiry: {expiry:yyyy-MM-dd}");
-                        col.Item().PaddingBottom(10).Text($"💰 Price: {price} USD");
+                        col.Item().Text($" Name: {user.FirstName} {user.LastName}");
+                        col.Item().Text($" Issued: {now:yyyy-MM-dd}   |   Expiry: {expiry:yyyy-MM-dd}");
+                        col.Item().PaddingBottom(10).Text($" Price: {price} USD");
                         col.Item().LineHorizontal(1);
-                        col.Item().Text("📄 Summary").SemiBold();
+                        col.Item().Text(" Summary").SemiBold();
                         col.Item().Text(summary).Italic();
-                        col.Item().PaddingTop(10).Text("💬 Message").SemiBold();
+                        col.Item().PaddingTop(10).Text(" Message").SemiBold();
                         col.Item().Text(gptText);
                     });
 
