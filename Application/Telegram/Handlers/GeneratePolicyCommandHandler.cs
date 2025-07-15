@@ -42,7 +42,7 @@ namespace Application.Telegram.Handlers
 
             var summary = string.Join("\n", extracted.Select(x => $"{x.FieldName}: {x.FieldValue}"));
 
-            var gptMessage = await _promptProvider.GetGenerateSummaryMessageAsync();
+            var gptMessage = await _promptProvider.GetGenerateSummaryMessageAsync(summary, cancellationToken);
 
             var pdfBytes = await _builder
                 .WithUser(user!)
