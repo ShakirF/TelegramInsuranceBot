@@ -58,7 +58,7 @@ namespace Infrastructure.Localization
             _openAi.GetBotReplyAsync("Acknowledge user cancelled policy generation. Reset the flow.");
 
         public Task<string> GetPolicyConfirmedMessageAsync() =>
-            _openAi.GetBotReplyAsync("Acknowledge user accepted the price. Begin policy generation.");
+            _openAi.GetBotReplyAsync("Acknowledge user accepted the price.short inform policy generate will be soon.");
 
         public Task<string> GetPolicyFixPriceMessageAsync() =>
             _openAi.GetBotReplyAsync("Inform user that the price is fixed and cannot be changed. Ask again 'confirm' to proceed or 'cancel' again to cancel and start over..");
