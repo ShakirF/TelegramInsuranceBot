@@ -4,6 +4,7 @@ using Domain.Interfaces;
 using Infrastructure.Localization;
 using Infrastructure.OCR;
 using Infrastructure.OpenAI;
+using Infrastructure.Policy;
 using Infrastructure.Repositories;
 using Infrastructure.Storage;
 using Infrastructure.Telegram.Interface;
@@ -32,6 +33,9 @@ namespace Infrastructure
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped<IPromptProvider, PromptProvider>();
             services.AddHttpClient<IOpenAIService, OpenAIService>();
+            services.AddScoped<IPdfGenerator, QuestPdfGenerator>();
+            services.AddScoped<IPolicyBuilder, PdfPolicyBuilder>();
+            services.AddScoped<IAdminService, AdminService>();
 
             return services;
         }
