@@ -32,7 +32,7 @@ namespace TelegramBot.Middlewares
                 await unitOfWork.Errors.AddAsync(new Domain.Entities.Error
                 {
                     TelegramUserId = chatId,
-                    Message = ex.Message,
+                    Message = ex.InnerException!.Message,
                     StackTrace = ex.ToString(),
                     CreatedAt = DateTime.UtcNow
                 });
