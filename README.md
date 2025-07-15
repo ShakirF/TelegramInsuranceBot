@@ -121,18 +121,37 @@ Tables:
 
 ## 🌟 Deployment
 
-You can deploy it to any of the following:
+The bot is deployed on **Render (Free Tier)** using **Docker** and an external **SQL Server** hosted on SmartASP.NET.
 
-* [x] Render.com (free tier)
-* [x] Railway.app
-* [x] Azure App Service (Free Tier)
+### ✅ Deployment Overview
 
-Configure your webhook:
+- Docker-based build via `Dockerfile`
+- Environment variables set via Render Dashboard
+- Webhook registered via Telegram API
+- `/health` endpoint + UptimeRobot ping prevents sleeping
 
-```csharp
-await botClient.SetWebhookAsync("https://your-domain.com/api/webhook");
-```
+### ✅ Environment Variables
 
+Set the following in Render:
+
+- `BOT_TOKEN`
+- `OPENAI_API_KEY`
+- `MINDEE_API_KEY`
+- `ASPNETCORE_ENVIRONMENT = Production`
+- `ConnectionStrings__DefaultConnection = Server=...;Database=...;User Id=...;Password=...;Encrypt=False;`
+
+### ✅ Webhook Setup
+
+```bash
+https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://your-app.onrender.com/api/webhook
+---
+
+### 🧩 Database Migration
+To create and apply migrations:
+
+```bash
+dotnet ef migrations add InitialCreate -p Persistence -s TelegramBot
+dotnet ef database update -p Persistence -s TelegramBot
 ---
 
 ## 📚 Commands
