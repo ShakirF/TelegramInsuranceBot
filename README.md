@@ -144,6 +144,7 @@ Set the following in Render:
 
 ```bash
 https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://your-app.onrender.com/api/webhook
+```
 ---
 
 ### 🧩 Database Migration
@@ -152,6 +153,7 @@ To create and apply migrations:
 ```bash
 dotnet ef migrations add InitialCreate -p Persistence -s TelegramBot
 dotnet ef database update -p Persistence -s TelegramBot
+```
 ---
 
 ## 📚 Commands
