@@ -17,6 +17,9 @@ namespace Domain.Entities
         public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
         public string? OcrRawJson { get; set; }
         public bool IsActive { get; set; } = true;
+        public string? ContentHash { get; set; }
+        public int UserId { get; set; }
+        public User? User { get; set; }
         public ICollection<ExtractedField> ExtractedFields { get; set; } = new List<ExtractedField>();
     }
 }
