@@ -23,7 +23,7 @@ It uses Mindee OCR, OpenAI GPT, PostgreSQL, and generates a PDF-based insurance 
 * **.NET 8**, **MediatR**, **EF Core**
 * **Telegram.Bot** SDK
 * **Mindee API** for OCR
-* **OpenAI API** for GPT
+* **OpenRouter API** for GPT
 * **PostgreSQL** database
 * **QuestPDF** for PDF generation
 * **Docker**, **Docker Compose**
