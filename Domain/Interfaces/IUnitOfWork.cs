@@ -9,6 +9,10 @@ namespace Domain.Interfaces
         IRepository<Document> Documents { get; }
         IRepository<ExtractedField> ExtractedFields { get; }
         IRepository<Policy> Policies { get; }
+        IRepository<PolicyEvent> PolicyEvents { get; }
+        IRepository<AuditLog> AuditLogs { get; }
+        IRepository<Conversation> Conversations { get; }
+        IRepository<Error> Errors { get; }
         Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
