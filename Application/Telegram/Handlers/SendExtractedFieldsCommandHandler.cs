@@ -21,49 +21,43 @@ namespace Application.Telegram.Handlers
 
         public async Task<Unit> Handle(SendExtractedFieldsCommand request, CancellationToken cancellationToken)
     {
-            var documents = await _unitOfWork.Documents.Query()
-                .Where(d => d.TelegramUserId == request.ChatId && d.OcrRawJson != null && d.IsActive)
-                .OrderBy(d => d.UploadedAt)
+            var fields = await _unitOfWork.ExtractedFields.Query()
+                .Include(f => f.Document)
+                .Where(f => f.Document.TelegramUserId == request.ChatId && f.Document.IsActive)
                 .ToListAsync(cancellationToken);
 
-            if (!documents.Any())
-        {
-            await _botService.SendTextAsync(request.ChatId, "⚠️ No extracted fields found.");
+            if (!fields.Any())
+            {
+                await _botService.SendTextAsync(request.ChatId, "❌ No extracted fields found in the document.");
+                return Unit.Value;
+            }
+
+            var passportFields = fields.Where(f => f.Document.FileType == "passport").ToList();
+            var carFields = fields.Where(f => f.Document.FileType == "car_registration").ToList();
+
+            var message = new StringBuilder("📄 Here is what I found in your documents:\n");
+
+            if (passportFields.Any())
+            {
+                message.AppendLine("\n📘 *PASSPORT:*");
+                foreach (var field in passportFields)
+                    message.AppendLine($"`{field.FieldName}`: {field.FieldValue}");
+            }
+
+            if (carFields.Any())
+            {
+                message.AppendLine("\n🚗 *CAR_REGISTRATION:*");
+                foreach (var field in carFields)
+                    message.AppendLine($"`{field.FieldName}`: {field.FieldValue}");
+            }
+
+            message.AppendLine("\n✅ If everything looks good, type *confirm*.");
+            message.AppendLine("🌀 Otherwise, re-upload the correct document.");
+
+            await _botService.SendTextAsync(request.ChatId, message.ToString());
+
             return Unit.Value;
         }
-
-        var sb = new StringBuilder();
-        sb.AppendLine("📋 <b>Here is what I found in your documents</b>:\n");
-
-        foreach (var doc in documents)
-        {
-            sb.AppendLine($"📌 <b>{doc.FileType.ToUpper()}</b>:");
-
-                var fields = await _unitOfWork.ExtractedFields.Query()
-                     .Where(f => f.DocumentId == doc.Id)
-                     .ToListAsync(cancellationToken);
-
-                if (fields.Count == 0)
-            {
-                sb.AppendLine("⚠️ No fields extracted.\n");
-                continue;
-            }
-
-            foreach (var field in fields)
-            {
-                sb.AppendLine($"🔹 <b>{field.FieldName}</b>: {field.FieldValue}");
-            }
-
-            sb.AppendLine(); // boş sətr
-        }
-
-        sb.AppendLine("✅ If everything looks good, type <b>confirm</b>.");
-        sb.AppendLine("🔁 Otherwise, re-upload the correct document.");
-
-        await _botService.SendTextAsync(request.ChatId, sb.ToString());
-
-        return Unit.Value;
     }
 }
 
-}

@@ -8,7 +8,9 @@ using Infrastructure.Telegram.Interface;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Identity.Client;
 using Persistence.DbContext;
+using Shared.Utilities;
 
 namespace Application.Telegram.Handlers
 {
@@ -49,30 +51,44 @@ namespace Application.Telegram.Handlers
             {
                 var currentStep = await _stateService.GetStepAsync(request.TelegramUserId);
 
-                if ((currentStep == UserStep.AwaitingPassport && request.FileType != "passport") ||
-                    (currentStep == UserStep.AwaitingCarDoc && request.FileType != "car_registration"))
+                if (!IsValidFileTypeForStep(currentStep, request.FileType))
                 {
-                    var messageUnexpectedDocument = await _promptProvider.GetUnexpectedDocumentMessageAsync();
-
-                    await _botService.SendTextAsync(request.TelegramUserId, messageUnexpectedDocument);
+                    await _botService.SendTextAsync(request.TelegramUserId, await _promptProvider.GetUnexpectedDocumentMessageAsync());
                     return Unit.Value;
                 }
-                var previousDocs = await _unitOfWork.Documents.Query()
-                    .Where(d => d.TelegramUserId == request.TelegramUserId &&
-                                d.FileType == request.FileType &&
-                                d.IsActive)
-                    .ToListAsync(cancellationToken);
-               
-                foreach (var predoc in previousDocs)
-                {
-                    predoc.IsActive = false;
-                    _unitOfWork.Documents.Update(predoc);
 
-                }
+                await DeactivatePreviousDocuments(request.TelegramUserId, request.FileType, cancellationToken);
 
                 using var stream = new MemoryStream();
                 await _botService.DownloadFileAsync(request.FileId, stream);
+
+                var hash = FileHashHelper.ComputeSHA256(stream);
+
+                var isDuplicate = await _unitOfWork.Documents.Query()
+                    .AnyAsync(d => d.TelegramUserId == request.TelegramUserId && d.ContentHash == hash && d.IsActive, cancellationToken);
+
+                if (isDuplicate)
+                {
+                    await _botService.SendTextAsync(request.TelegramUserId, "⚠️ You've already uploaded this file.");
+                    return Unit.Value;
+                }
                 var savedPath = await _fileStorage.SaveAsync(stream, request.FileName, request.TelegramUserId.ToString());
+
+                var user = await _unitOfWork.Users.Query()
+                    .FirstOrDefaultAsync(u => u.TelegramUserId == request.TelegramUserId, cancellationToken);
+                
+                if (user != null)
+                {
+                    user.UploadRetryCount++;
+                    _unitOfWork.Users.Update(user);
+                    await _unitOfWork.SaveChangesAsync(cancellationToken);
+                }
+                else 
+                {
+                    _logger.LogWarning("User not found for TelegramUserId={TelegramUserId}", request.TelegramUserId);
+                    await _botService.SendTextAsync(request.TelegramUserId, "❗ Please start the bot with /start first.");
+                    return Unit.Value;
+                }
 
                 var doc = new Document
                 {
@@ -81,7 +97,9 @@ namespace Application.Telegram.Handlers
                     FileName = request.FileName,
                     FileType = request.FileType,
                     LocalPath = savedPath,
-                    UploadedAt = DateTime.UtcNow
+                    UploadedAt = DateTime.UtcNow,
+                    UserId = user.Id,
+                    ContentHash = hash,
                 };
 
                 await _unitOfWork.Documents.AddAsync(doc, cancellationToken);
@@ -92,12 +110,7 @@ namespace Application.Telegram.Handlers
                 await _botService.SendTextAsync(request.TelegramUserId, messageSaved);
 
                 stream.Position = 0;
-                var ocrResult = request.FileType switch
-                {
-                    "passport" => await _ocrService.ExtractPassportDataAsync(stream, request.FileName, cancellationToken),
-                    "car_registration" => await _ocrService.ExtractVehicleDataAsync(stream, request.FileName, cancellationToken),
-                    _ => throw new InvalidOperationException("Unsupported file type.")
-                };
+                var ocrResult = await RunOcrAsync(request.FileType, stream, request.FileName, cancellationToken);
 
                 var messageOcrDone = await _promptProvider.GetOcrDoneMessageAsync();
                 await _botService.SendTextAsync(request.TelegramUserId, messageOcrDone);
@@ -108,12 +121,7 @@ namespace Application.Telegram.Handlers
                     OcrJson = ocrResult
                 }, cancellationToken);
 
-                var nextStep = currentStep switch
-                {
-                    UserStep.AwaitingPassport => UserStep.AwaitingCarDoc,
-                    UserStep.AwaitingCarDoc => UserStep.AwaitingConfirmation,
-                    _ => currentStep
-                };
+                var nextStep = GetNextStep(currentStep);
 
                 await _stateService.SetStepAsync(request.TelegramUserId, nextStep);
 
@@ -154,7 +162,45 @@ namespace Application.Telegram.Handlers
 
             return Unit.Value;
         }
+
+        private bool IsValidFileTypeForStep(UserStep step, string fileType) =>
+            (step == UserStep.AwaitingPassport && fileType == "passport") ||
+            (step == UserStep.AwaitingCarDoc && fileType == "car_registration");
+
+        private async Task DeactivatePreviousDocuments(long userId, string fileType, CancellationToken cancellationToken)
+        {
+            var previousDocs = await _unitOfWork.Documents.Query()
+                .Where(d => d.TelegramUserId == userId && d.FileType == fileType && d.IsActive)
+                .ToListAsync(cancellationToken);
+
+            foreach (var doc in previousDocs)
+            {
+                doc.IsActive = false;
+                _unitOfWork.Documents.Update(doc);
+            }
+
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
+        private Task<string> RunOcrAsync(string type, Stream stream, string name, CancellationToken cancellationToken) =>
+        type switch
+        {
+            "passport" => _ocrService.ExtractPassportDataAsync(stream, name, cancellationToken),
+            "car_registration" => _ocrService.ExtractVehicleDataAsync(stream, name, cancellationToken),
+            _ => throw new InvalidOperationException("Unsupported file type")
+        };
+
+        private UserStep GetNextStep(UserStep currentStep) =>
+        currentStep switch
+        {
+            UserStep.AwaitingPassport => UserStep.AwaitingCarDoc,
+            UserStep.AwaitingCarDoc => UserStep.AwaitingConfirmation,
+            _ => currentStep
+        };
+
     }
+
+
 
 
 }

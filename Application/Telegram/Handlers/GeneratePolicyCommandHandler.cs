@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Telegram.Commands;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Interfaces;
 using Infrastructure.Storage;
 using Infrastructure.Telegram.Interface;
@@ -37,7 +38,7 @@ namespace Application.Telegram.Handlers
             var extracted = await _unitOfWork.ExtractedFields.Query()
                 .Include(f => f.Document)
                     .ThenInclude(d => d.User)
-                .Where(f => f.Document.User.TelegramUserId == request.ChatId)
+                .Where(f => f.Document.User!.TelegramUserId == request.ChatId)
                 .ToListAsync(cancellationToken);
 
             var summary = string.Join("\n", extracted.Select(x => $"{x.FieldName}: {x.FieldValue}"));
@@ -66,6 +67,11 @@ namespace Application.Telegram.Handlers
             };
 
             await _unitOfWork.Policies.AddAsync(policy, cancellationToken);
+            await _unitOfWork.PolicyEvents.AddAsync(new PolicyEvent
+            {
+                PolicyId = policy.Id,
+                EventType = EventType.Issued.ToString(),
+            }, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             await _bot.SendDocumentAsync(request.ChatId, path, "✅ Here is your insurance policy PDF!");

@@ -35,10 +35,7 @@ namespace Application.Telegram.Handlers
 
                 var fields = ExtractFieldsFromJson(request.OcrJson, request.DocumentId, document.FileType);
 
-                foreach (var field in fields)
-                {
-                    await _unitOfWork.ExtractedFields.AddAsync(field, cancellationToken);
-                }
+                await _unitOfWork.ExtractedFields.AddRangeAsync(fields, cancellationToken);
                 await _unitOfWork.SaveChangesAsync(cancellationToken);
 
                 _logger.LogInformation("📤 Extracted {Count} fields from OCR for Document ID: {Id}", fields.Count, document.Id);
