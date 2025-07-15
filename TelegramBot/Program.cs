@@ -6,6 +6,10 @@ using Infrastructure;
 using Microsoft.AspNetCore.Diagnostics;
 using Newtonsoft.Json;
 using System.Net;
+using QuestPDF.Infrastructure;
+using TelegramBot.Middlewares;
+
+QuestPDF.Settings.License = LicenseType.Community;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -20,37 +24,8 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
-app.UseExceptionHandler(appError =>
-{
-    appError.Run(async context =>
-    {
-        context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-        context.Response.ContentType = "application/json";
-        var contextFeature = context.Features.Get<IExceptionHandlerFeature>();
-        if (contextFeature != null)
-        {
-            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
-            logger.LogError($"{contextFeature.Error}");
+app.UseMiddleware<ErrorHandlingMiddleware>();
 
-            await context.Response.WriteAsync(JsonConvert.SerializeObject(new
-            {
-                error = "? An unexpected error occurred. Please try again later."
-            }));
-        }
-    });
-});
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next.Invoke();
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Unhandled error: {ex.Message}");
-        throw;
-    }
-});
 if (app.Environment.IsDevelopment())
 {
     app.UseDeveloperExceptionPage();
@@ -59,5 +34,6 @@ else
 {
     app.UseExceptionHandler("/error");
 }
+app.UseRouting();
 app.MapControllers();
 app.Run();
