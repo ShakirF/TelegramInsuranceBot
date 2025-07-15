@@ -46,13 +46,13 @@ Infrastructure.Tests/    -> Unit tests for OCR, storage
 ---
 
 ## 🧠 Design Patterns Used
-* Pattern	Purpose
-* CQRS + MediatR	Separation of read/write responsibilities
-* Builder Pattern	Used in PdfPolicyBuilder to modularly build PDF
-* Repository Pattern	Encapsulation of EF Core queries
-* Service Abstractions	Testability and layer isolation
+  Pattern	                    Purpose
+* CQRS + MediatR	            Separation of read/write responsibilities
+* Builder Pattern	            Used in PdfPolicyBuilder to modularly build PDF
+* Repository Pattern	        Encapsulation of EF Core queries
+* Service Abstractions	      Testability and layer isolation
 * Factory (DbContextFactory)	Migration və test zamanı DbContext yaratmaq üçün
-* Middleware	Centralized error handling and logging
+* Middleware	                Centralized error handling and logging
 
 ---
 
