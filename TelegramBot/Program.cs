@@ -8,6 +8,8 @@ using Newtonsoft.Json;
 using System.Net;
 using QuestPDF.Infrastructure;
 using TelegramBot.Middlewares;
+using Persistence.DbContext;
+using Microsoft.EntityFrameworkCore;
 
 QuestPDF.Settings.License = LicenseType.Community;
 
@@ -28,6 +30,11 @@ builder.Services.AddControllers();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>(); 
+    db.Database.Migrate();
+}
 app.UseMiddleware<ErrorHandlingMiddleware>();
 
 if (app.Environment.IsDevelopment())
