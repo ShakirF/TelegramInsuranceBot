@@ -72,6 +72,7 @@ Infrastructure.Tests/    -> Unit tests for OCR, storage
 3. Upload Car Doc -> OCR -> extract fields
 4. Show parsed data to user
 5. `confirm` -> show price
+`cancel` -> bot write its fix price
 6. `confirm` again -> Generate PDF
 7. PDF sent to user
 
@@ -82,6 +83,7 @@ Infrastructure.Tests/    -> Unit tests for OCR, storage
 * `/adminsummary` - issued policies
 * `/logs` - failed generations
 * `/simulateocr` - inject test data
+* `/resendpolicy` -	sends last generated policy PDF to user again
 
 ---
 
