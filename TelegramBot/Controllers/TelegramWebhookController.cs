@@ -20,9 +20,9 @@ namespace TelegramBot.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Post([FromBody] Update update)
+        public async Task<IActionResult> Post([FromBody] Update update, CancellationToken cancellationToken)
         {
-            await _dispatcher.HandleAsync(update);
+            await _dispatcher.HandleAsync(update, cancellationToken);
             return Ok();
         }
     }
