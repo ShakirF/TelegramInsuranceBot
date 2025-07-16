@@ -22,5 +22,6 @@ namespace Application.Interfaces
         Task<string> GetPolicyConfirmedMessageAsync();
         Task<string> GetPolicyFixPriceMessageAsync();
         Task<string> GetGenerateSummaryMessageAsync(string summary, CancellationToken cancellationToken);
+        Task<string> GetAssistentAnswer(string userQuestion, CancellationToken cancellationToken);
     }
 }

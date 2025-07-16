@@ -64,5 +64,18 @@ namespace Infrastructure.Localization
             _openAi.GetBotReplyAsync("Inform user that the price is fixed and cannot be changed. Ask again 'confirm' to proceed or 'cancel' again to cancel and start over..");
         public Task<string> GetGenerateSummaryMessageAsync(string summary, CancellationToken cancellationToken) =>
                         _openAi.GetBotReplyAsync($"Generate a summary of the policy with the following details: {summary}. Please ensure it is clear and concise.", cancellationToken);
+
+        public async Task<string> GetAssistentAnswer(string userQuestion, CancellationToken cancellationToken)
+        {
+            var prompt = $"""
+        You are a friendly assistant in a Telegram bot that helps users get car insurance. 
+        Answer questions briefly and clearly. 
+        If the question is outside the insurance topic, kindly guide them to start the process using /start.
+
+        User: {userQuestion}
+        """;
+
+            return await _openAi.GetBotReplyAsync(prompt, cancellationToken);
+        }
     }
 }
