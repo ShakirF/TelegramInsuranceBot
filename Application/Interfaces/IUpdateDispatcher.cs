@@ -4,6 +4,6 @@ namespace Application.Interfaces
 {
     public interface IUpdateDispatcher
     {
-        Task HandleAsync(Update update, CancellationToken cancellationToken);
+        Task HandleAsync(Update update);
     }
 }

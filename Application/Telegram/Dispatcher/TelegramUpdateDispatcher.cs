@@ -21,7 +21,7 @@ namespace Application.Telegram.Dispatcher
             _promptProvider = promptProvider;
         }
 
-        public async Task HandleAsync(Update update, CancellationToken cancellationToken)
+        public async Task HandleAsync(Update update)
         {
             var message = update.Message;
             if (message == null)
@@ -131,12 +131,12 @@ namespace Application.Telegram.Dispatcher
 
             if (!string.IsNullOrWhiteSpace(message.Text))
             {
-                
-                var answer = await _promptProvider.GetAssistentAnswer(message.Text, cancellationToken);
- 
-                if(answer is null || answer.Trim().Length == 0)
-                    await _mediator.Send(new UnknownCommand { ChatId = chatId });
-                
+                await _mediator.Send(new AssistantCommand
+                {
+                    ChatId = chatId,
+                    UserMessage = message.Text
+                });
+
                 return;
             }
         }
